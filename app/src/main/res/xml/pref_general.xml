@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditTextPreference
+        android:key="@string/pref_location_key"
+        android:inputType="text"
+        android:singleLine="true"
+        android:title="@string/pref_location_label"
+        android:defaultValue="@string/pref_location_default"
+        android:summary="Select the units you want to use"
+        />
+
+    <ListPreference
+        android:key="@string/pref_units_key"
+        android:defaultValue="@string/pref_units_metric"
+        android:title="@string/pref_units_title"
+        android:dialogTitle="@string/pref_units_dialogtitle"
+        android:entries="@array/pref_units_entries"
+        android:entryValues="@array/pref_units_values"
+        android:summary="Select the units you want to use"
+        />
+
+</PreferenceScreen>

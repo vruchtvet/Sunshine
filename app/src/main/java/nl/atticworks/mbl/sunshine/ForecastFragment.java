@@ -5,9 +5,12 @@ package nl.atticworks.mbl.sunshine;
  */
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,6 +50,7 @@ public class ForecastFragment extends Fragment {
     private ArrayAdapter<String> mForecastAdapter;
 
     public ForecastFragment() {
+
     }
 
     @Override
@@ -57,9 +61,14 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflator) {
         // Inflate the menu; this adds items to the action bar if it is present.
-
         inflator.inflate(R.menu.forecastfragment, menu);
     }
 
@@ -67,12 +76,18 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask f = new FetchWeatherTask();
-            f.execute("94043", null, null);
-            Log.d(LOG_TAG, "did it execute??");
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = pref.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+        FetchWeatherTask f = new FetchWeatherTask();
+        f.execute(location, null, null);
     }
 
     @Override
@@ -80,15 +95,6 @@ public class ForecastFragment extends Fragment {
                              final Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        final String[] forecast = {"today - sunny - 01/01",
-                "tomorrow - sunny - 02/02",
-                "tue - sunny - 03/03",
-                "wed - sunny - 04/04",
-                "thu - sunny - 05/05",
-                "fri - sunny - 06/06",
-                "sat - sunny - 07/07"};
-
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecast));
         mForecastAdapter = new ArrayAdapter<String>(
                 // the current context
                 getActivity(),
@@ -97,10 +103,10 @@ public class ForecastFragment extends Fragment {
                 // ID of the textview to populate
                 R.id.list_item_forecast_textview,
                 // the data
-                weekForecast);
+                new ArrayList<String>());
 
         // Get a reference to the listview and bind the adapter
-        ListView listView = (ListView)rootView.findViewById(R.id.listview_forecast);
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -118,7 +124,7 @@ public class ForecastFragment extends Fragment {
     /* The date/time conversion code is going to be moved outside the asynctask later,
      * so for convenience we're breaking it out into its own method now.
      */
-    private String getReadableDateString(long time){
+    private String getReadableDateString(long time) {
         // Because the API returns a unix timestamp (measured in seconds),
         // it must be converted to milliseconds in order to be converted to valid date.
         Date date = new Date(time * 1000);
@@ -131,6 +137,13 @@ public class ForecastFragment extends Fragment {
      */
     private String formatHighLows(double high, double low) {
         // For presentation, assume the user doesn't care about tenths of a degree.
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String units = pref.getString(getString(R.string.pref_units_key),
+                                      getString(R.string.pref_units_metric));
+        if (units.equals(getString(R.string.pref_units_imperial))) {
+            high = (high * 1.8) + 32;
+            low = (low * 1.8) + 32;
+        }
         long roundedHigh = Math.round(high);
         long roundedLow = Math.round(low);
 
@@ -141,7 +154,7 @@ public class ForecastFragment extends Fragment {
     /**
      * Take the String representing the complete forecast in JSON Format and
      * pull out the data we need to construct the Strings needed for the wireframes.
-     *
+     * <p/>
      * Fortunately parsing is easy:  constructor takes the JSON string and converts it
      * into an Object hierarchy for us.
      */
@@ -161,7 +174,7 @@ public class ForecastFragment extends Fragment {
         JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
 
         String[] resultStrs = new String[numDays];
-        for(int i = 0; i < weatherArray.length(); i++) {
+        for (int i = 0; i < weatherArray.length(); i++) {
             // For now, using the format "Day, description, hi/low"
             String day;
             String description;
@@ -242,7 +255,7 @@ public class ForecastFragment extends Fragment {
                 final String DAYS_PARAM = "cnt";
 
                 Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
-                    .appendQueryParameter(QUERY_PARAM, params[0])
+                        .appendQueryParameter(QUERY_PARAM, params[0])
                         .appendQueryParameter(FORMAT_PARAM, format)
                         .appendQueryParameter(UNITS_PARAM, units)
                         .appendQueryParameter(DAYS_PARAM, Integer.toString(numDays)).build();
