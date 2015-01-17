@@ -28,11 +28,11 @@
         </activity>
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/action_settings"
+            android:label="@string/title_activity_settings"
             android:parentActivityName=".MainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="nl.atticworks.mbl.sunshine.SettingsActivity" />
+                android:value="nl.atticworks.mbl.sunshine.MainActivity" />
         </activity>
     </application>
 
